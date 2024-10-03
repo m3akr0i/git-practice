@@ -1,66 +1,49 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
+
+  # Get current AWS account info
+data "aws_caller_identity" "current" {}
 
 # Define the security group
 resource "aws_security_group" "hw2_sshfromhome" {
-  name        = "ssh_access_from_home-hw2"
+  name        = var.security_group_name
   description = "EC2: ssh from home; http(s) from anywhere"
 
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["194.62.137.21/32"]
+    cidr_blocks = [var.home_ip]
   }
 
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.meta_ip_mask]
   }
 
   ingress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.meta_ip_mask]
   }
 
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-data "aws_ami" "latest_ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"]
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
-
-  filter {
-    name   = "root-device-type"
-    values = ["ebs"]
+    cidr_blocks = [var.meta_ip_mask]
   }
 }
 
 resource "aws_instance" "ec2_t2micro" {
-  ami           = data.aws_ami.latest_ubuntu.id 
-  instance_type = "t2.micro"
+  ami           = var.ami_ubuntu
+  instance_type = var.instance_type
 
-  key_name = "test-mykola1_pair"
+  key_name = var.key_name
 
   vpc_security_group_ids = [aws_security_group.hw2_sshfromhome.id]
 
@@ -79,7 +62,20 @@ resource "aws_instance" "ec2_t2micro" {
   }
 }
 
-# Output the public IP of the EC2 instance
-output "instance_ip" {
-  value = aws_instance.ec2_t2micro.public_ip
+# Random password for Secrets Manager
+resource "random_password" "password" {
+  length  = var.password_length
+  special = true
+}
+
+# Create a secret in AWS Secrets Manager
+# This name used cause other secret with name was created manually & marked as deleted before
+resource "aws_secretsmanager_secret" "my_test_secret" {
+  name = "my-test-secret_unique"
+}
+
+# Add random password to the secret
+resource "aws_secretsmanager_secret_version" "secret_version" {
+  secret_id     = aws_secretsmanager_secret.my_test_secret.id
+  secret_string = random_password.password.result
 }

@@ -1,4 +1,4 @@
-# Practice with git and GitHub
+# Practice with git and GitHub <ins>for DevOps</ins>
 
 \[Your Step 3 Edit Here\]
 

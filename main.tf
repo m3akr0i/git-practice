@@ -10,7 +10,7 @@ resource "random_password" "password" {
 }
 
 resource "aws_secretsmanager_secret" "my_test_secret" {
-  name = "my-test-secret_unique-b"
+  name = "my-test-secret_unique-c"
   recovery_window_in_days = 7
 }
 

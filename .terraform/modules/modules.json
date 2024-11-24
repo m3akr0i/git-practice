@@ -1,1 +1,1 @@
-{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"ec2_instance","Source":"./modules/ec2","Dir":"modules/ec2"}]}
+{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"ec2_instance","Source":"./modules/ec2","Dir":"modules/ec2"},{"Key":"rds_instance","Source":"./modules/rds","Dir":"modules/rds"}]}

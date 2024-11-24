@@ -10,7 +10,7 @@ resource "random_password" "password" {
 }
 
 resource "aws_secretsmanager_secret" "my_test_secret" {
-  name = "my-test-secret_unique-a"
+  name = "my-test-secret_unique-c"
   recovery_window_in_days = 7
 }
 
@@ -28,6 +28,16 @@ module "ec2_instance" {
   home_ip           = var.home_ip
   meta_ip_mask      = var.meta_ip_mask
   secret_id         = aws_secretsmanager_secret.my_test_secret.id
+}
+
+module "rds_instance" {
+  source             = "./modules/rds"
+  identifier         = "myapp-db"
+  engine             = "mysql"
+  instance_class     = "db.t3.micro"
+  allocated_storage  = 20
+  username           = "admin"
+  password           = "nkp8dy3WLoBzRU2"
 }
 
 output "instance_ip" {
@@ -114,3 +124,5 @@ resource "aws_autoscaling_group" "app_asg" {
   health_check_type        = "EC2"
   health_check_grace_period = 300
 }
+
+

@@ -51,6 +51,7 @@ resource "aws_instance" "ec2_t2micro" {
   user_data = <<-EOF
               #!/bin/bash
               yum update -y
+              
               amazon-linux-extras install docker -y
               service docker start
               usermod -a -G docker ec2-user
@@ -66,6 +67,33 @@ resource "aws_instance" "ec2_t2micro" {
 
               # Optional: set environment variables from .env
               export $(grep -v '^#' /home/ec2-user/.env | xargs)
+
+              # Install & configure the CloudWatch Agent for RAM monitoring
+              yum install -y amazon-cloudwatch-agent
+              cat <<EOT >> /opt/aws/amazon-cloudwatch-agent/bin/config.json
+              {
+                  "metrics": {
+                      "metrics_collected": {
+                          "mem": {
+                              "measurement": [
+                                  {"name": "mem_used_percent", "unit": "Percent"},
+                                  {"name": "mem_available_percent", "unit": "Percent"}
+                              ],
+                              "resources": [
+                                  "*"
+                              ],
+                              "unit": "Percent"
+                          }
+                      }
+                  }
+              }
+              EOT
+              # Start the CloudWatch Agent
+              /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+                -a fetch-config \
+                -m ec2 \
+                -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json \
+                -s
               EOF
 
   tags = {
